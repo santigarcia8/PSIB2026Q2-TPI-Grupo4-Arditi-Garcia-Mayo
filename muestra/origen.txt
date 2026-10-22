@@ -1,0 +1,13 @@
+Muestra de trabajo del TPI: 10 imágenes del dataset de Zenodo 14253170 (HumanEmbryo2.0, CC BY 4.0).
+Origen de cada archivo dentro del zip:
+
+2cell/00098.png  <-  HumanEmbryo2.0/2cell/test/00098.png
+2cell/00621.png  <-  HumanEmbryo2.0/2cell/train/00621.png
+2cell/00751.png  <-  HumanEmbryo2.0/2cell/train/00751.png
+4cell/00095.png  <-  HumanEmbryo2.0/4cell/test/00095.png
+4cell/00668.png  <-  HumanEmbryo2.0/4cell/train/00668.png
+4cell/00843.png  <-  HumanEmbryo2.0/4cell/train/00843.png
+8cell/00478.png  <-  HumanEmbryo2.0/8cell/train/00478.png
+8cell/00709.png  <-  HumanEmbryo2.0/8cell/train/00709.png
+8cell/00738.png  <-  HumanEmbryo2.0/8cell/train/00738.png
+8cell/00972.png  <-  HumanEmbryo2.0/8cell/train/00972.png
