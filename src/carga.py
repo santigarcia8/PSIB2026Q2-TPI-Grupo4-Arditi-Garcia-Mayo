@@ -1,9 +1,3 @@
-"""
-Carga de la muestra de trabajo: 10 imágenes del dataset de Zenodo 14253170 (embriones humanos, contraste Hoffman),
-guardadas en la carpeta muestra/ del repo. Devuelve imágenes en escala de grises, float en [0, 1].
-Responsable: Olivia Mayo
-"""
-
 from pathlib import Path
 
 import numpy as np
@@ -71,11 +65,13 @@ def cargar_muestra(carpeta=CARPETA_MUESTRA):
     return lista
 
 
-if __name__ == "__main__":
-    # Prueba rápida: python -m src.carga (desde la carpeta del repo)
-    muestra = cargar_muestra()
-    print(f"Muestra de trabajo: {len(muestra)} imágenes")
-    for ruta, estadio in muestra:
-        imagen = cargar_imagen(ruta)
-        print(f"  {estadio:6s} ({CELULAS_POR_ESTADIO[estadio]} células)  {ruta.name}"
-              f"  forma {imagen.shape}  rango [{imagen.min():.2f}, {imagen.max():.2f}]")
+def etapa_carga(carpeta=CARPETA_MUESTRA):
+    """
+    Etapa completa de carga, la que llama main.py. Busca las imágenes de la muestra, comprueba que cada una
+    se pueda leer (si alguna está rota, frena acá con un error) y devuelve la lista de (ruta, estadio)
+    que reciben las etapas siguientes.
+    """
+    muestra = cargar_muestra(carpeta)
+    for ruta, _ in muestra:
+        cargar_imagen(ruta)
+    return muestra
