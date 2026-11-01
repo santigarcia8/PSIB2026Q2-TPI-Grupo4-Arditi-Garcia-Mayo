@@ -1,4 +1,5 @@
-from src import carga, preprocesamiento, visualizacion
+import sys
+from src import carga, preprocesamiento, visualizacion, estimar_celulas
 import numpy as np
 from scipy import ndimage
 import matplotlib.pyplot as plt
@@ -17,7 +18,7 @@ from skimage.feature import peak_local_max
 def mapa_desvio(imagen_pre, mascara_pocillo, tam=9):
     media_normal = ndimage.uniform_filter(imagen_pre, size=tam) #aplico kernel de 9x9 que hace la media
     media_cuadrado = ndimage.uniform_filter(imagen_pre**2, size=tam) #aplico lo mismo pero a la imagen al cuadrado
-    varianza = media_cuadrado-media_normal**2 
+    varianza = media_cuadrado-media_normal**2
     desvio = np.sqrt(np.maximum(varianza,0)) #hago el desvió que me da el mapa del tamaño de la imagen pero como tiene el borde claro qe lo detecta le hago una erosión para eliminarlo
     mascara_chica = ndimage.binary_erosion(mascara_pocillo, iterations=10)
     mapa = desvio * mascara_chica
@@ -37,8 +38,8 @@ def otsu_embrion(mapa, mascara_chica):
     return embrion_otsu
 
 def segmentacion_embrion(embrion_otsu, imagen_pre):
-    embrion_segmentado_total = embrion_otsu * imagen_pre #multiplico para obtener las imágenes con el otsu 
-    
+    embrion_segmentado_total = embrion_otsu * imagen_pre #multiplico para obtener las imágenes con el otsu
+
     return embrion_segmentado_total
 
 
@@ -54,14 +55,34 @@ def watershed_embrion(imagen_pre, mascara_pocillo, base, r_dentro=18, r_fuera=12
     return (ws == 2) & mascara_pocillo #devuelve solo la zona 2 (embrión) y la máscara del pocillo
 
 #PASO 1.3 - SEGMENTACIÓN con SNAKES
-def snake_embrion(imagen_pre, mascara_pocillo, base, num_iter=40): #defino 40 a prueba y error 
+def snake_embrion(imagen_pre, mascara_pocillo, base, num_iter=40): #defino 40 a prueba y error
     bordes = inverse_gaussian_gradient(imagen_pre, alpha=100, sigma=2) #uso invertido fondo y embrión. usamos alpha = 100 porque los bordes NO son tan fuertes, sigma = 2 porque los bordes del embrión son bastante finos
     snake = morphological_geodesic_active_contour(
         bordes, num_iter=num_iter, init_level_set=base,
         smoothing=2, balloon=-1, threshold="auto") #parto de la máscara base (otsu), ballon para achicarse o inflarse, smoothing para que no quede tan irregular la snake
     return snake.astype(bool) & mascara_pocillo #devuelve la zona booleana de 1 y 0 y la cruza con el pocillo
 
+#Atajo: embrión vs fondo completo (Otsu por desvío -> Watershed). Es el embrión que usan los pasos siguientes
+def embrion_watershed(imagen_pre, mascara_pocillo):
+    mapa, mascara_chica = mapa_desvio(imagen_pre, mascara_pocillo)
+    base = otsu_embrion(mapa, mascara_chica)
+    return watershed_embrion(imagen_pre, mascara_pocillo, base)
+
 #PASO 2 - SEPARACIÓN DE CÉLULAS
+
+#PASO 2.0 - ESTIMACIÓN AUTOMÁTICA DE LA CANTIDAD DE CÉLULAS (k) POR TEXTURA
+#Sin machine learning: estimar_celulas.py mide contraste, homogeneidad, energía y entropía (GLCM) del embrión,
+#los combina en un índice de textura y decide 2, 4 u 8 células según umbrales fijos (UMBRAL_2_4 y UMBRAL_4_8)
+def calibrar_umbrales(muestra=None):
+    #imprime las medidas de textura de cada imagen de la muestra para poder ajustar los umbrales a mano
+    if muestra is None:
+        muestra = carga.cargar_muestra()
+    for ruta, estadio in muestra:
+        imagen_pre, mascara_pocillo = preprocesamiento.preprocesar(carga.cargar_imagen(ruta))
+        embrion = embrion_watershed(imagen_pre, mascara_pocillo)
+        m = estimar_celulas.medidas_textura(imagen_pre, embrion)
+        print(f"{estadio}/{ruta.name}: contraste={m['contraste']:.3f} homogeneidad={m['homogeneidad']:.3f} "
+              f"energía={m['energia']:.3f} entropía={m['entropia']:.3f} | bordes={m['indice_bordes']:.2f}")
 
 #PASO 2.1 - REALCE DE BORDES CON CANNY
 def bordes_canny(imagen_pre, embrion):
@@ -74,7 +95,7 @@ def bordes_canny(imagen_pre, embrion):
 def hough_embrion(bordes):
     radios = np.arange(24, 59, 2)
     puntaje = hough_circle(bordes, radios)
-    
+
     return puntaje, radios
 
 #PASO 2.3 - CALIFICACIÓN DE LOS CÍRCULOS DE HOUGH
@@ -124,15 +145,7 @@ def separar_celulas(imagen_pre, embrion, elegidos, extension=1.2):
 
 def etapa_segmentacion(ruta):
     print("\n=== Etapa 2: segmentación ===")
-    print("Embrión vs fondo: Otsu, Watershed y Snake. Células: Canny + Hough + Watershed.")
-
-    # El k (cantidad de células) sale del nombre de la carpeta: 2cell, 4cell u 8cell
-    k = None
-    for parte in ruta.parts:
-        if parte in carga.CELULAS_POR_ESTADIO:
-            k = carga.CELULAS_POR_ESTADIO[parte]
-    if k is None:
-        k = int(input("  No pude deducir el estadio. ¿Cuántas células tiene? (2, 4 u 8): "))
+    print("Embrión vs fondo: Otsu, Watershed y Snake. Células: textura (k) + Canny + Hough + Watershed.")
 
     imagen = carga.cargar_imagen(ruta)
     imagen_pre, mascara_pocillo = preprocesamiento.preprocesar(imagen)
@@ -154,6 +167,9 @@ def etapa_segmentacion(ruta):
     fig1.suptitle(f"Embrión vs fondo: {ruta.name}")
     fig1.tight_layout()
     ruta1 = visualizacion.guardar_figura(fig1, f"segmentacion_embrion_{ruta.stem}")
+
+    # Cantidad de células: automática por textura (usa el embrión del watershed)
+    k = estimar_celulas.estimar_k(imagen_pre, ws)
 
     # Células (se usa el embrión del watershed)
     bordes = bordes_canny(imagen_pre, ws)
@@ -181,17 +197,21 @@ def etapa_segmentacion(ruta):
 
 
 if __name__ == "__main__":
+    # python -m src.segmentacion calibrar  -> muestra las medidas de textura de la muestra para ajustar los umbrales
+    if "calibrar" in sys.argv:
+        calibrar_umbrales()
+        sys.exit()
+
     muestra = carga.cargar_muestra()
 
     fig, ejes = plt.subplots(2, 5, figsize=(25, 10))
     for eje, (ruta, estadio) in zip(ejes.ravel(), muestra):
-        k = carga.CELULAS_POR_ESTADIO[estadio]
+        k_real = carga.CELULAS_POR_ESTADIO[estadio]
         imagen = carga.cargar_imagen(ruta)
         imagen_pre, mascara_pocillo = preprocesamiento.preprocesar(imagen)
 
-        mapa, mascara_chica = mapa_desvio(imagen_pre, mascara_pocillo)
-        base = otsu_embrion(mapa, mascara_chica)
-        embrion = watershed_embrion(imagen_pre, mascara_pocillo, base)
+        embrion = embrion_watershed(imagen_pre, mascara_pocillo)
+        k = estimar_celulas.estimar_k(imagen_pre, embrion, verbose=False)
 
         bordes = bordes_canny(imagen_pre, embrion)
         puntaje, radios = hough_embrion(bordes)
@@ -201,7 +221,7 @@ if __name__ == "__main__":
 
         eje.imshow(imagen_pre, cmap="gray")
         eje.imshow(np.ma.masked_equal(celulas, 0), cmap="tab10", alpha=0.5, vmin=1, vmax=10)
-        eje.set_title(f"{estadio}/{ruta.name} (k={k})")
+        eje.set_title(f"{estadio}/{ruta.name} (real={k_real}, estimado={k})")
         eje.axis("off")
 
     plt.tight_layout()
