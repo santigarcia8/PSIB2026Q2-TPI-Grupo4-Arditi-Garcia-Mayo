@@ -82,7 +82,7 @@ def calibrar_umbrales(muestra=None):
         embrion = embrion_watershed(imagen_pre, mascara_pocillo)
         m = estimar_celulas.medidas_textura(imagen_pre, embrion)
         print(f"{estadio}/{ruta.name}: contraste={m['contraste']:.3f} homogeneidad={m['homogeneidad']:.3f} "
-              f"energía={m['energia']:.3f} entropía={m['entropia']:.3f} | bordes={m['indice_bordes']:.2f}")
+              f"energía={m['energia']:.3f} entropía={m['entropia']:.3f} | membranas={m['indice_bordes']:.2f} compartimiento={m['compartimiento']:.2f}")
 
 #PASO 2.1 - REALCE DE BORDES CON CANNY
 def bordes_canny(imagen_pre, embrion):
