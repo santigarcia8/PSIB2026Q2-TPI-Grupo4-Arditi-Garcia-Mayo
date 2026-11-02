@@ -4,7 +4,7 @@ import traceback
 
 import matplotlib.pyplot as plt
 
-from src import carga, preprocesamiento, segmentacion, morfometria, implantacion
+from src import carga, preprocesamiento, segmentacion, morfometria, implantacion, compresion
 
 # Modo interactivo: las figuras se muestran sin bloquear el programa y las ventanas siguen respondiendo
 # mientras se espera un Enter. Evita el cuelgue de plt.show() al cerrar ventanas (backend de Mac).
@@ -48,6 +48,13 @@ if __name__ == "__main__":
 
             # Etapa 4: clasificación morfológica
             implantacion.etapa_implantacion(ruta)
+
+            #Etapa 5: Compresion
+            compresion.etapa_compresion(
+                img_preprocesada=pasos["final"],
+                mascara_pocillo=pasos["mascara"],
+                nombre_imagen=ruta.name
+            )
         except Exception:
             # Un error en una imagen no debe cerrar el programa: se informa y se sigue con el menú
             print("\n  ERROR procesando esta imagen:")
