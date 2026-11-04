@@ -308,7 +308,7 @@ def etapa_morfometria(ruta, um_por_pixel=None, mostrar=True):
     res = analizar(embrion, celulas, k, um_por_pixel)
     imprimir(res, ruta.name)
     fig = figura(imagen_pre, res, f"Morfometría: {ruta.name}")
-    ruta_fig = visualizacion.guardar_figura(fig, f"morfometria_{ruta.stem}")
+    ruta_fig = visualizacion.guardar_figura(fig, "morfometria", ruta.name)
     print(f"  Figura guardada en {ruta_fig}")
     if mostrar:
         plt.show(block=False)

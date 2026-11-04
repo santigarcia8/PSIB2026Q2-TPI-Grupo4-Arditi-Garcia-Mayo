@@ -23,10 +23,14 @@ def mostrar_pasos(imagenes, titulos, titulo_general=""):
         fig.tight_layout()
     return fig
 
+def carpeta_imagen(nombre_imagen):
+    """Devuelve resultados/<id de la imagen>/ (la crea si no existe)."""
+    carpeta = CARPETA_RESULTADOS / Path(nombre_imagen).stem
+    carpeta.mkdir(parents=True, exist_ok=True)
+    return carpeta
 
-def guardar_figura(fig, nombre):
-    """Guarda la figura en resultados/<nombre>.png (crea la carpeta si no existe). Devuelve la ruta."""
-    CARPETA_RESULTADOS.mkdir(exist_ok=True)
-    ruta = CARPETA_RESULTADOS / f"{nombre}.png"
+def guardar_figura(fig, nombre, imagen):
+    """Guarda la figura en resultados/<imagen>/<nombre>.png. Devuelve la ruta."""
+    ruta = carpeta_imagen(imagen) / f"{nombre}.png"
     fig.savefig(ruta, dpi=100)
     return ruta

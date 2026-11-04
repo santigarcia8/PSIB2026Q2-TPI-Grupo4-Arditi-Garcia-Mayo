@@ -217,7 +217,7 @@ def mostrar_preprocesamiento(imagen, pasos, nombre):
     titulos = ["Original", "1. Máscara del pocillo", "2. Ruido (Wiener)",
                "3. Iluminación (pasa-altos)", "4. Contraste: preprocesada"]
     fig = visualizacion.mostrar_pasos(imagenes, titulos, f"Preprocesamiento de {nombre}")
-    return visualizacion.guardar_figura(fig, f"preprocesamiento_{Path(nombre).stem}")
+    return visualizacion.guardar_figura(fig, "preprocesamiento", nombre)
 
 
 def etapa_preprocesamiento(muestra):

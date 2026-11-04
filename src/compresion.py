@@ -10,7 +10,7 @@ import heapq
 from pathlib import Path
 import pickle
 import numpy as np
-
+from src import visualizacion
 
 # ---------------------------------------------------------------------------
 # Estrutura y Construcción del Árbol de Huffman
@@ -142,11 +142,8 @@ def etapa_compresion(img_preprocesada: np.ndarray, mascara_pocillo: np.ndarray, 
     tasa_rle = tam_orig_masc / tam_comp_masc if tam_comp_masc > 0 else 0
 
     # 3. Guardar paquetes comprimidos en disco (resultados/)
-    dir_salida = Path("resultados")
-    dir_salida.mkdir(exist_ok=True)
-    
     stem_nombre = Path(nombre_imagen).stem
-    ruta_guardado = dir_salida / f"comprimido_{stem_nombre}.pkl"
+    ruta_guardado = visualizacion.carpeta_imagen(nombre_imagen) / "comprimido.pkl"
     
     with open(ruta_guardado, "wb") as f:
         pickle.dump({"huffman": paquete_huffman, "rle": paquete_rle}, f)

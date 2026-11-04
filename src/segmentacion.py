@@ -166,7 +166,7 @@ def etapa_segmentacion(ruta):
         eje.axis("off")
     fig1.suptitle(f"Embrión vs fondo: {ruta.name}")
     fig1.tight_layout()
-    ruta1 = visualizacion.guardar_figura(fig1, f"segmentacion_embrion_{ruta.stem}")
+    ruta1 = visualizacion.guardar_figura(fig1, "segmentacion_embrion", ruta.name)
 
     # Cantidad de células: automática por textura (usa el embrión del watershed)
     k = estimar_celulas.estimar_k(imagen_pre, ws)
@@ -191,7 +191,7 @@ def etapa_segmentacion(ruta):
         eje.axis("off")
     fig2.suptitle(f"Separación de células: {ruta.name}")
     fig2.tight_layout()
-    ruta2 = visualizacion.guardar_figura(fig2, f"segmentacion_celulas_{ruta.stem}")
+    ruta2 = visualizacion.guardar_figura(fig2, "segmentacion_celulas", ruta.name)
 
     print(f"  Figuras guardadas en {ruta1} y {ruta2}")
 

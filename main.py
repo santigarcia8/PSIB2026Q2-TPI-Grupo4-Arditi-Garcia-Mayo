@@ -6,17 +6,6 @@ import matplotlib.pyplot as plt
 
 from src import carga, preprocesamiento, segmentacion, morfometria, implantacion, compresion
 
-# Modo interactivo: las figuras se muestran sin bloquear el programa y las ventanas siguen respondiendo
-# mientras se espera un Enter. Evita el cuelgue de plt.show() al cerrar ventanas (backend de Mac).
-plt.ion()
-
-
-def mostrar_y_esperar():
-    """Muestra las figuras abiertas y espera un Enter para seguir (después las cierra)."""
-    plt.show(block=False)
-    plt.pause(0.2)
-    input("  Mirá la figura y presioná Enter para continuar... ")
-    plt.close("all")
 
 
 if __name__ == "__main__":
@@ -33,7 +22,6 @@ if __name__ == "__main__":
             pasos = preprocesamiento.preprocesar_con_pasos(imagen)
             ruta_figura = preprocesamiento.mostrar_preprocesamiento(imagen, pasos, ruta.name)
             print(f"  Figura guardada en {ruta_figura}")
-            mostrar_y_esperar()
 
             # Diagnóstico: si el cálculo de las etapas 2-4 tarda más de 60 s sin terminar, imprime en pantalla
             # en qué línea está (cada 60 s). Así se ve si es lentitud o un cuelgue real y dónde ocurre.
@@ -43,7 +31,7 @@ if __name__ == "__main__":
             segmentacion.etapa_segmentacion(ruta)
             plt.close("all")   # evita que se mezclen las figuras de la etapa 2 con las de la etapa 3
 
-            # Etapa 3: morfometría (no muestra la figura sola: se muestra acá y se espera un Enter)
+            # Etapa 3: morfometría
             morfometria.etapa_morfometria(ruta, mostrar=False)
 
             # Etapa 4: clasificación morfológica
